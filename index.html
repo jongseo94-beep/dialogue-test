@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일상 대화 습관 자기 진단</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f0fdfa; /* Soft mint/teal light background */
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Option Card Animation */
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .option-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Gauge bar transition */
+        .gauge-fill {
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between selection:bg-teal-100 selection:text-teal-800">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-teal-100 shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-xl bg-teal-500 flex items-center justify-center text-white shadow-md shadow-teal-200">
+                    <i class="fa-solid font-bold text-lg fa-comments"></i>
+                </div>
+                <span class="font-bold text-slate-800 text-lg tracking-tight">대화습관 진단</span>
+            </div>
+            <button onclick="resetSurvey()" class="text-sm font-medium text-slate-500 hover:text-teal-600 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-teal-50">
+                <i class="fa-solid fa-rotate-right text-xs"></i>
+                <span>초기화</span>
+            </button>
+        </div>
+        
+        <!-- Sticky Progress Bar -->
+        <div class="w-full bg-slate-100 h-1.5">
+            <div id="sticky-progress" class="bg-gradient-to-r from-teal-400 to-indigo-500 h-1.5 w-0 transition-all duration-300"></div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl w-full mx-auto px-4 py-6 sm:py-8 flex-grow">
+        <!-- Hero Banner -->
+        <div class="bg-gradient-to-br from-teal-500 via-teal-600 to-indigo-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-teal-900/10 mb-8 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="absolute right-20 -top-10 w-32 h-32 bg-teal-300/20 rounded-full blur-xl"></div>
+            
+            <div class="relative z-10">
+                <span class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold tracking-wide text-teal-50 mb-3 border border-white/20">
+                    <i class="fa-regular fa-smile text-amber-300"></i> 자가 진단 테스트
+                </span>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 leading-snug">
+                    일상 대화 습관 자기 진단
+                </h1>
+                <p class="text-teal-100 text-sm sm:text-base leading-relaxed max-w-xl">
+                    나의 평소 대화 습관을 돌아보고, 더 나은 소통을 위한 개선점을 찾아봅시다.
+                </p>
+            </div>
+
+            <!-- Progress Card inside Hero -->
+            <div class="mt-6 pt-5 border-t border-white/15 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+                <div class="flex items-center gap-2">
+                    <span id="progress-text" class="font-bold text-white text-base">0</span>
+                    <span class="text-teal-200">/ 19 문항 응답 완료</span>
+                </div>
+                <div id="completion-status" class="text-teal-200 font-medium flex items-center gap-1.5 bg-black/10 px-3 py-1 rounded-full">
+                    <i class="fa-solid fa-circle-notch animate-spin text-xs"></i>
+                    <span>답근 진행 중...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions Form -->
+        <form id="survey-form" class="space-y-4">
+            <div id="questions-container" class="space-y-4">
+                <!-- Dynamically Inserted Questions -->
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-6 pb-12 flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <button type="button" onclick="submitSurvey()" 
+                    class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-600 hover:to-indigo-700 text-white font-bold text-base rounded-2xl shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-square-check text-lg"></i>
+                    <span>진단 결과 확인하기</span>
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Footer Disclaimer -->
+    <footer class="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-500 px-4">
+        <div class="max-w-2xl mx-auto space-y-2">
+            <p class="leading-relaxed">
+                ※ 이 진단은 자신의 언어 습관을 돌아보기 위한 참고 자료이며, 공식적인 판정이나 평가가 아닙니다.
+            </p>
+            <p class="text-slate-400">© 2026 일상 대화 습관 자기 진단. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden transform transition-all my-8 animate-in fade-in zoom-in-95 duration-200">
+            
+            <!-- Modal Header -->
+            <div class="p-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between sticky top-0 z-10">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800">진단 결과 보고서</h3>
+                </div>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-200/60 text-slate-500 hover:bg-slate-200 hover:text-slate-700 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-6 overflow-y-auto custom-scrollbar space-y-6">
+                
+                <!-- Score & Level Badge -->
+                <div class="text-center p-6 bg-gradient-to-b from-slate-50 to-white rounded-2xl border border-slate-100">
+                    <span id="level-badge" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold mb-3 shadow-sm">
+                        <!-- Dynamic Badge -->
+                    </span>
+                    <h2 id="result-headline" class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-2">
+                        <!-- Dynamic Result Headline -->
+                    </h2>
+                    <p class="text-slate-600 text-sm mb-4">
+                        19개 문항 중 <span class="font-bold text-teal-600 text-base" id="yes-count">0</span>개의 '그렇다' 항목에 해당합니다.
+                    </p>
+
+                    <!-- Gauge Bar -->
+                    <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden p-0.5 relative mb-2 border border-slate-200/60">
+                        <div id="gauge-bar" class="gauge-fill h-full rounded-full bg-gradient-to-r from-teal-400 to-indigo-500 w-0"></div>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-400 font-medium px-1">
+                        <span>0 (양호)</span>
+                        <span>5</span>
+                        <span>11 (주의)</span>
+                        <span>19 (위험)</span>
+                    </div>
+                </div>
+
+                <!-- Advice / Reflection Section -->
+                <div class="space-y-3">
+                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-amber-500"></i>
+                        <span>내가 선택한 '그렇다' 항목 돌아보기</span>
+                    </h4>
+
+                    <div id="selected-items-list" class="space-y-2">
+                        <!-- Dynamically filled selected items -->
+                    </div>
+                </div>
+
+                <!-- Advice Tips Box -->
+                <div class="bg-indigo-50/80 rounded-2xl p-4 border border-indigo-100/80 text-xs sm:text-sm text-indigo-900 space-y-2">
+                    <div class="font-bold flex items-center gap-1.5 text-indigo-700">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                        <span>더 나은 대화를 위한 한 걸음</span>
+                    </div>
+                    <p id="advice-text" class="text-slate-700 leading-relaxed">
+                        <!-- Dynamic Advice -->
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer Buttons -->
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-2 justify-end">
+                <button onclick="shareResult()" class="w-full sm:w-auto px-5 py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium text-sm rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-share-nodes text-slate-500"></i>
+                    <span>결과 요약 복사하기</span>
+                </button>
+                <button onclick="resetAndCloseModal()" class="w-full sm:w-auto px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium text-sm rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>다시 진단하기</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white px-4 py-2.5 rounded-full text-xs sm:text-sm shadow-xl flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2">
+        <i class="fa-solid fa-circle-check text-teal-400"></i>
+        <span id="toast-msg">복사되었습니다.</span>
+    </div>
+
+    <script>
+        // Questions Data Array
+        const questions = [
+            "나는 기분의 좋고 나쁨에 따라 말투가 달라지기도 한다.",
+            "내가 전달한 내용을 상대방이 정확하게 이해하지 못할 때가 있다.",
+            "대화 도중 짜증이 날 때면 바로 “짜증난다.”와 같이 표현한다.",
+            "대화 중 불만이 생기면 혼자 중얼거리거나 투덜거린다.",
+            "일상적인 대화에서 욕설을 자주 사용한다.",
+            "대화할 때 SNS나 인터넷, 게임 용어를 많이 섞어 쓴다.",
+            "유행어를 자주 사용한다.",
+            "말하는 중간에 ‘음, 어, 그러니까, 그게’ 등의 표현을 자주 사용한다.",
+            "대화 중 상황이나 감정을 과장하여 표현하는 경우가 많다.",
+            "다른 사람의 흉을 잡아 비난하거나 놀린다.",
+            "거짓말을 자주 한다. (예: 불리한 상황에서 거짓말을 한다.)",
+            "친구들에게 “XX도 아닌 게.”, “어쩌라고.”와 같은 무시하는 말을 한다.",
+            "상대방의 말을 주의 깊게 듣지 않는다.",
+            "대화에 집중하지 않고 다른 일을 한다. (예: 휴대전화를 자주 만진다.)",
+            "상대방의 말을 끝까지 듣지 않고 내가 하고 싶은 말을 하는 편이다.",
+            "친구들이 말할 때 무표정하게 있거나 아무 반응을 하지 않는다.",
+            "상대방의 기분을 생각하지 않고 내가 하고 싶은 말을 한다.",
+            "주위를 의식하지 않고 큰 소리로 말하다가 주의를 받은 적이 있다.",
+            "나의 말장난 때문에 친구와 싸운 적이 있다."
+        ];
+
+        // State to store user answers: key = question index, value = 'yes' or 'no'
+        const answers = {};
+
+        // Render Questions on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderQuestions();
+            updateProgress();
+        });
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+
+            questions.forEach((qText, idx) => {
+                const qNum = String(idx + 1).padStart(2, '0');
+                const card = document.createElement('div');
+                card.id = `q-card-${idx}`;
+                card.className = "bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200";
+
+                card.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start gap-3 flex-1">
+                            <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-teal-50 text-teal-700 font-bold text-xs shrink-0 mt-0.5 border border-teal-100">
+                                ${qNum}
+                            </span>
+                            <p class="text-slate-700 font-medium text-sm sm:text-base leading-relaxed">
+                                ${escapeHtml(qText)}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+                            <button type="button" onclick="selectAnswer(${idx}, 'yes')" id="btn-${idx}-yes" 
+                                class="option-btn flex-1 sm:flex-initial px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 border-slate-200 text-slate-600 hover:bg-slate-50">
+                                <i class="fa-regular fa-circle text-xs"></i>
+                                <span>그렇다</span>
+                            </button>
+                            <button type="button" onclick="selectAnswer(${idx}, 'no')" id="btn-${idx}-no" 
+                                class="option-btn flex-1 sm:flex-initial px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 border-slate-200 text-slate-600 hover:bg-slate-50">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                                <span>아니다</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectAnswer(index, val) {
+            answers[index] = val;
+
+            const yesBtn = document.getElementById(`btn-${index}-yes`);
+            const noBtn = document.getElementById(`btn-${index}-no`);
+            const card = document.getElementById(`q-card-${index}`);
+
+            // Reset styles
+            yesBtn.className = "option-btn flex-1 sm:flex-initial px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all";
+            noBtn.className = "option-btn flex-1 sm:flex-initial px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all";
+
+            if (val === 'yes') {
+                yesBtn.classList.add('bg-rose-500', 'text-white', 'border-rose-500', 'shadow-sm');
+                noBtn.classList.add('border-slate-200', 'text-slate-400', 'bg-slate-50');
+                yesBtn.querySelector('i').className = "fa-solid fa-circle-check text-xs";
+                noBtn.querySelector('i').className = "fa-solid fa-xmark text-xs";
+                card.classList.remove('border-slate-100');
+                card.classList.add('border-rose-100', 'bg-rose-50/10');
+            } else {
+                noBtn.classList.add('bg-teal-600', 'text-white', 'border-teal-600', 'shadow-sm');
+                yesBtn.classList.add('border-slate-200', 'text-slate-400', 'bg-slate-50');
+                noBtn.querySelector('i').className = "fa-solid fa-circle-check text-xs";
+                yesBtn.querySelector('i').className = "fa-regular fa-circle text-xs";
+                card.classList.remove('border-rose-100', 'bg-rose-50/10');
+                card.classList.add('border-slate-100');
+            }
+
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const answeredCount = Object.keys(answers).length;
+            const total = questions.length;
+            const pct = Math.round((answeredCount / total) * 100);
+
+            document.getElementById('progress-text').innerText = answeredCount;
+            document.getElementById('sticky-progress').style.width = `${pct}%`;
+
+            const statusEl = document.getElementById('completion-status');
+            if (answeredCount === total) {
+                statusEl.className = "text-emerald-300 font-semibold flex items-center gap-1.5 bg-emerald-950/30 px-3 py-1 rounded-full border border-emerald-400/30";
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-xs"></i> <span>모든 문항 답변 완료!</span>`;
+            } else {
+                statusEl.className = "text-teal-200 font-medium flex items-center gap-1.5 bg-black/10 px-3 py-1 rounded-full";
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin text-xs"></i> <span>${total - answeredCount}개 문항 남음</span>`;
+            }
+        }
+
+        function submitSurvey() {
+            const answeredCount = Object.keys(answers).length;
+            if (answeredCount < questions.length) {
+                // Find first unanswered question and scroll to it
+                for (let i = 0; i < questions.length; i++) {
+                    if (!answers[i]) {
+                        const targetCard = document.getElementById(`q-card-${i}`);
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // Flash highlight card
+                        targetCard.classList.add('ring-2', 'ring-amber-400');
+                        setTimeout(() => targetCard.classList.remove('ring-2', 'ring-amber-400'), 1500);
+                        
+                        showToast("아직 답변하지 않은 문항이 있습니다.");
+                        return;
+                    }
+                }
+            }
+
+            // Count Yes
+            let yesCount = 0;
+            const selectedYesIndexes = [];
+            for (let i = 0; i < questions.length; i++) {
+                if (answers[i] === 'yes') {
+                    yesCount++;
+                    selectedYesIndexes.push(i);
+                }
+            }
+
+            // Populate Modal Content
+            document.getElementById('yes-count').innerText = yesCount;
+
+            const badgeEl = document.getElementById('level-badge');
+            const headlineEl = document.getElementById('result-headline');
+            const gaugeBar = document.getElementById('gauge-bar');
+            const adviceEl = document.getElementById('advice-text');
+
+            const scorePct = Math.min(Math.max((yesCount / 19) * 100, 5), 100);
+            
+            // Timeout to trigger gauge animation after modal opens
+            setTimeout(() => {
+                gaugeBar.style.width = `${scorePct}%`;
+            }, 100);
+
+            if (yesCount <= 5) {
+                // 양호 (0~5)
+                badgeEl.className = "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold mb-3 shadow-sm bg-emerald-100 text-emerald-800 border border-emerald-200";
+                badgeEl.innerHTML = `<i class="fa-solid fa-shield-heart"></i> 양호 (0~5개)`;
+                headlineEl.innerText = "현재의 대화 습관을 유지해요. 👏";
+                gaugeBar.className = "gauge-fill h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500";
+                adviceEl.innerText = "상대방을 배려하고 경청하는 훌륭한 대화 습관을 가지고 있습니다. 지금처럼 서로를 존중하며 따뜻한 대화를 이어가세요!";
+                
+                // Trigger Confetti for good result
+                try {
+                    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+                } catch(e) {}
+
+            } else if (yesCount <= 11) {
+                // 주의 (6~11)
+                badgeEl.className = "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold mb-3 shadow-sm bg-amber-100 text-amber-800 border border-amber-200";
+                badgeEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> 주의 (6~11개)`;
+                headlineEl.innerText = "대화 습관을 돌아보고 개선할 점을 찾아요. 💡";
+                gaugeBar.className = "gauge-fill h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500";
+                adviceEl.innerText = "가끔 나의 의도와 달리 상대방이 오해하거나 상처를 받을 수 있는 언어 습관이 있습니다. 아래 선택된 항목들을 살피며 경청과 고운 말 사용을 의식해 보세요.";
+
+            } else {
+                // 위험 (12~19)
+                badgeEl.className = "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold mb-3 shadow-sm bg-rose-100 text-rose-800 border border-rose-200";
+                badgeEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> 위험 (12~19개)`;
+                headlineEl.innerText = "상대에게 상처를 주는 말과 행동을 적극적으로 개선해요. ⚠️";
+                gaugeBar.className = "gauge-fill h-full rounded-full bg-gradient-to-r from-rose-500 to-red-600";
+                adviceEl.innerText = "나도 모르게 상대방을 무시하거나 감정적으로 대화하는 경향이 높습니다. 대화 전 잠시 호흡을 가다듬고, 상대의 기분을 배려하는 대화 습관을 갖도록 적극적인 노력이 필요합니다.";
+            }
+
+            // Render Selected 'Yes' Items List
+            const listContainer = document.getElementById('selected-items-list');
+            listContainer.innerHTML = '';
+
+            if (selectedYesIndexes.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="p-4 rounded-xl bg-slate-50 text-slate-500 text-center text-xs sm:text-sm">
+                        ✨ '그렇다'라고 응답한 항목이 없습니다! 매우 모범적인 언어 습관을 가지고 계시네요.
+                    </div>
+                `;
+            } else {
+                selectedYesIndexes.forEach(idx => {
+                    const item = document.createElement('div');
+                    item.className = "p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-start gap-2.5 text-xs sm:text-sm text-slate-700";
+                    item.innerHTML = `
+                        <span class="w-5 h-5 rounded-md bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                            ${idx + 1}
+                        </span>
+                        <span class="leading-relaxed">${escapeHtml(questions[idx])}</span>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            }
+
+            // Show Modal
+            document.getElementById('result-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+        }
+
+        function resetSurvey() {
+            for (let key in answers) {
+                delete answers[key];
+            }
+            questions.forEach((_, idx) => {
+                const yesBtn = document.getElementById(`btn-${idx}-yes`);
+                const noBtn = document.getElementById(`btn-${idx}-no`);
+                const card = document.getElementById(`q-card-${idx}`);
+
+                if (yesBtn && noBtn) {
+                    yesBtn.className = "option-btn flex-1 sm:flex-initial px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 border-slate-200 text-slate-600 hover:bg-slate-50";
+                    noBtn.className = "option-btn flex-1 sm:flex-initial px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 border-slate-200 text-slate-600 hover:bg-slate-50";
+                    yesBtn.querySelector('i').className = "fa-regular fa-circle text-xs";
+                    noBtn.querySelector('i').className = "fa-solid fa-xmark text-xs";
+                }
+                if (card) {
+                    card.className = "bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200";
+                }
+            });
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast("모든 응답이 초기화되었습니다.");
+        }
+
+        function resetAndCloseModal() {
+            closeModal();
+            resetSurvey();
+        }
+
+        function shareResult() {
+            let yesCount = 0;
+            for (let key in answers) {
+                if (answers[key] === 'yes') yesCount++;
+            }
+
+            let statusStr = "";
+            if (yesCount <= 5) statusStr = "양호 (0~5개)";
+            else if (yesCount <= 11) statusStr = "주의 (6~11개)";
+            else statusStr = "위험 (12~19개)";
+
+            const shareText = `[일상 대화 습관 자기 진단 결과]\n- '그렇다' 항목: 19개 중 ${yesCount}개\n- 진단 상태: ${statusStr}\n\n나의 대화 습관을 돌아보고 더 나은 소통을 만들어가요!`;
+
+            // Copy to clipboard via fallback
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = shareText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("결과 요약이 클립보드에 복사되었습니다!");
+            } catch (err) {
+                showToast("복사에 실패했습니다.");
+            }
+            document.body.removeChild(tempTextArea);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 2500);
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+    </script>
+</body>
+</html>
